@@ -1,0 +1,79 @@
+
+{
+  "schema_version": "1.0.0",
+  "project": {
+    "title": "Midnight Vision",
+    "creative_brief": "Create a cinematic vertical introduction with dramatic typography and atmospheric lighting.",
+    "style": "cinematic, dark, premium",
+    "target_audience": "Social media viewers",
+    "created_by": "Welvox Studio AI"
+  },
+  "output": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "format": "mp4",
+    "video_codec": "h264",
+    "audio_codec": "aac",
+    "quality": "high"
+  },
+  "assets": [
+    {
+      "id": "main-footage",
+      "type": "video",
+      "uri": "assets/main-footage.mp4",
+      "label": "Main video"
+    }
+  ],
+  "timeline": {
+    "duration_seconds": 8,
+    "scenes": [
+      {
+        "id": "scene-01",
+        "start_seconds": 0,
+        "duration_seconds": 8,
+        "description": "Dramatic opening with a cinematic title.",
+        "layers": [
+          {
+            "id": "footage-01",
+            "type": "footage",
+            "asset_id": "main-footage",
+            "start_seconds": 0,
+            "duration_seconds": 8
+          },
+          {
+            "id": "title-01",
+            "type": "text",
+            "start_seconds": 1,
+            "duration_seconds": 5,
+            "engine": "motion",
+            "operation": "animated_title",
+            "parameters": {
+              "text": "MIDNIGHT VISION",
+              "animation": "cinematic_reveal"
+            }
+          },
+          {
+            "id": "grade-01",
+            "type": "effect",
+            "start_seconds": 0,
+            "duration_seconds": 8,
+            "engine": "cinema",
+            "operation": "cinematic_grade",
+            "parameters": {
+              "contrast": 1.15,
+              "saturation": 0.9
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "audio": {
+    "preserve_original": true,
+    "master_volume": 1
+  },
+  "metadata": {
+    "example": true
+  }
+}
