@@ -1,4 +1,5 @@
- """Welvox Studio AI Core Engine."""
+
+"""Welvox Studio AI Core Engine."""
 
 from .welvox_core import (
     detect_capabilities,
@@ -13,3 +14,4 @@ __all__ = [
     "load_plan",
     "validate_plan",
 ]
+
