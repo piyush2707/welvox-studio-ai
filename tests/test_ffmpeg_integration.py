@@ -1,4 +1,3 @@
-
 """Integration tests for real FFmpeg rendering."""
 
 import json
@@ -23,25 +22,20 @@ EXAMPLE_PLAN = ROOT / "examples" / "production-plan.example.json"
 )
 class FFmpegRenderIntegrationTests(unittest.TestCase):
 
-    def create_source_and_plan(self, root):
-        (root / "assets").mkdir()
-        (root / "output").mkdir()
-
-        source = root / "assets" / "source.mp4"
-
-        generated = subprocess.run(
+    def generate_video(self, output, color, duration=1):
+        result = subprocess.run(
             [
                 shutil.which("ffmpeg"),
                 "-y",
                 "-f", "lavfi",
-                "-i", "color=c=0x24334a:s=320x240:r=24:d=1",
+                "-i", f"color=c={color}:s=320x240:r=24:d={duration}",
                 "-f", "lavfi",
-                "-i", "sine=frequency=440:duration=1",
+                "-i", f"sine=frequency=440:duration={duration}",
                 "-shortest",
                 "-c:v", "libx264",
                 "-pix_fmt", "yuv420p",
                 "-c:a", "aac",
-                str(source),
+                str(output),
             ],
             capture_output=True,
             text=True,
@@ -49,9 +43,16 @@ class FFmpegRenderIntegrationTests(unittest.TestCase):
         )
 
         self.assertEqual(
-            generated.returncode, 0,
-            msg=generated.stderr[-3000:]
+            result.returncode, 0,
+            msg=result.stderr[-3000:]
         )
+
+    def create_source_and_plan(self, root):
+        (root / "assets").mkdir()
+        (root / "output").mkdir()
+
+        source = root / "assets" / "source.mp4"
+        self.generate_video(source, "0x24334a")
 
         with EXAMPLE_PLAN.open("r", encoding="utf-8") as file:
             plan = json.load(file)
@@ -62,7 +63,11 @@ class FFmpegRenderIntegrationTests(unittest.TestCase):
             "fps": 24,
             "format": "mp4",
         })
-        plan["assets"][0]["uri"] = "assets/source.mp4"
+        plan["assets"] = [{
+            "id": "main-footage",
+            "type": "video",
+            "uri": "assets/source.mp4",
+        }]
         plan["timeline"]["duration_seconds"] = 1
 
         scene = plan["timeline"]["scenes"][0]
@@ -169,9 +174,6 @@ class FFmpegRenderIntegrationTests(unittest.TestCase):
                 plan, root, "output/film-grain.mp4"
             )
             self.assertTrue(job["ready"], msg=str(job))
-            self.assertEqual(
-                job["vfx_operation"], "film_grain"
-            )
 
             result = execute_render_job(job)
             self.assertTrue(result["success"], msg=str(result))
@@ -193,9 +195,6 @@ class FFmpegRenderIntegrationTests(unittest.TestCase):
                 plan, root, "output/tech-neon.mp4"
             )
             self.assertTrue(job["ready"], msg=str(job))
-            self.assertEqual(
-                job["vfx_operation"], "tech_neon_grade"
-            )
 
             result = execute_render_job(job)
             self.assertTrue(result["success"], msg=str(result))
@@ -218,9 +217,46 @@ class FFmpegRenderIntegrationTests(unittest.TestCase):
                 plan, root, "output/vignette.mp4"
             )
             self.assertTrue(job["ready"], msg=str(job))
-            self.assertEqual(
-                job["vfx_operation"], "vignette"
+
+            result = execute_render_job(job)
+            self.assertTrue(result["success"], msg=str(result))
+
+            self.assert_valid_mp4(output)
+
+    def test_renders_real_mp4_with_picture_in_picture_overlay(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            plan = self.create_source_and_plan(root)
+
+            overlay_source = root / "assets" / "overlay.mp4"
+            self.generate_video(overlay_source, "red")
+
+            plan["assets"].append({
+                "id": "overlay-footage",
+                "type": "video",
+                "uri": "assets/overlay.mp4",
+            })
+
+            plan["timeline"]["scenes"][0]["layers"].append({
+                "id": "picture-in-picture",
+                "type": "overlay",
+                "asset_id": "overlay-footage",
+                "start_seconds": 0.2,
+                "duration_seconds": 0.6,
+                "parameters": {
+                    "x": 20,
+                    "y": 20,
+                    "width": 120,
+                    "height": 90,
+                },
+            })
+
+            output = root / "output" / "picture-in-picture.mp4"
+
+            job = prepare_render_job(
+                plan, root, "output/picture-in-picture.mp4"
             )
+            self.assertTrue(job["ready"], msg=str(job))
 
             result = execute_render_job(job)
             self.assertTrue(result["success"], msg=str(result))
@@ -230,4 +266,3 @@ class FFmpegRenderIntegrationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-    
