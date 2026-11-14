@@ -161,9 +161,7 @@ class FFmpegRenderIntegrationTests(unittest.TestCase):
             layer = plan["timeline"]["scenes"][0]["layers"][0]
             layer["engine"] = "vfx"
             layer["operation"] = "film_grain"
-            layer["parameters"] = {
-                "strength": 18
-            }
+            layer["parameters"] = {"strength": 18}
 
             output = root / "output" / "film-grain.mp4"
 
@@ -180,7 +178,31 @@ class FFmpegRenderIntegrationTests(unittest.TestCase):
 
             self.assert_valid_mp4(output)
 
+    def test_renders_real_mp4_with_tech_neon_vfx(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            plan = self.create_source_and_plan(root)
+
+            layer = plan["timeline"]["scenes"][0]["layers"][0]
+            layer["engine"] = "vfx"
+            layer["operation"] = "tech_neon_grade"
+
+            output = root / "output" / "tech-neon.mp4"
+
+            job = prepare_render_job(
+                plan, root, "output/tech-neon.mp4"
+            )
+            self.assertTrue(job["ready"], msg=str(job))
+            self.assertEqual(
+                job["vfx_operation"], "tech_neon_grade"
+            )
+
+            result = execute_render_job(job)
+            self.assertTrue(result["success"], msg=str(result))
+
+            self.assert_valid_mp4(output)
+
 
 if __name__ == "__main__":
     unittest.main()
-    
+            
