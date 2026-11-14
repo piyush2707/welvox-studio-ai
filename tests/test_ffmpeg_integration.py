@@ -153,6 +153,33 @@ class FFmpegRenderIntegrationTests(unittest.TestCase):
 
             self.assert_valid_mp4(output)
 
+    def test_renders_real_mp4_with_film_grain(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            plan = self.create_source_and_plan(root)
+
+            layer = plan["timeline"]["scenes"][0]["layers"][0]
+            layer["engine"] = "vfx"
+            layer["operation"] = "film_grain"
+            layer["parameters"] = {
+                "strength": 18
+            }
+
+            output = root / "output" / "film-grain.mp4"
+
+            job = prepare_render_job(
+                plan, root, "output/film-grain.mp4"
+            )
+            self.assertTrue(job["ready"], msg=str(job))
+            self.assertEqual(
+                job["vfx_operation"], "film_grain"
+            )
+
+            result = execute_render_job(job)
+            self.assertTrue(result["success"], msg=str(result))
+
+            self.assert_valid_mp4(output)
+
 
 if __name__ == "__main__":
     unittest.main()
