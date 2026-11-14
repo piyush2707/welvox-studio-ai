@@ -1,8 +1,10 @@
 
 """Welvox Studio AI - FFmpeg Rendering Adapter.
 
-Supports one scene, one footage layer, and optional
-VFX color treatments applied directly to that footage.
+Supports one scene with:
+- One primary footage layer.
+- Optional VFX on the primary footage.
+- Optional one-video picture-in-picture overlay.
 """
 
 import argparse
@@ -29,8 +31,17 @@ def resolve_inside_root(root, value):
     return candidate
 
 
+def unsupported(message):
+    """Return a consistent unsupported-project result."""
+    return {
+        "ready": False,
+        "status": "unsupported_project",
+        "errors": [message]
+    }
+
+
 def prepare_render_job(plan, project_root, output_path):
-    """Prepare an FFmpeg command for a supported simple project."""
+    """Prepare an FFmpeg command for a supported project."""
     validation = validate_plan(plan)
 
     if not validation["valid"]:
@@ -47,66 +58,71 @@ def prepare_render_job(plan, project_root, output_path):
     scenes = timeline["scenes"]
 
     if len(scenes) != 1:
-        return {
-            "ready": False,
-            "status": "unsupported_project",
-            "errors": ["Initial adapter supports exactly one scene."]
-        }
+        return unsupported(
+            "Initial adapter supports exactly one scene."
+        )
 
     scene = scenes[0]
 
     if scene["start_seconds"] != 0:
-        return {
-            "ready": False,
-            "status": "unsupported_project",
-            "errors": ["The first scene must start at zero."]
-        }
+        return unsupported(
+            "The first scene must start at zero."
+        )
 
     if scene["duration_seconds"] != timeline["duration_seconds"]:
-        return {
-            "ready": False,
-            "status": "unsupported_project",
-            "errors": ["Scene duration must match project duration."]
-        }
+        return unsupported(
+            "Scene duration must match project duration."
+        )
 
     layers = scene["layers"]
 
-    if len(layers) != 1:
-        return {
-            "ready": False,
-            "status": "unsupported_project",
-            "errors": [
-                "Initial adapter supports exactly one layer. "
-                "Separate effects, titles, overlays, and audio "
-                "layers are not implemented yet."
-            ]
-        }
+    if len(layers) not in (1, 2):
+        return unsupported(
+            "Adapter supports one footage layer and "
+            "optionally one video overlay."
+        )
 
-    layer = layers[0]
+    footage_layers = [
+        layer for layer in layers
+        if layer["type"] == "footage"
+    ]
 
-    if layer["type"] != "footage":
-        return {
-            "ready": False,
-            "status": "unsupported_project",
-            "errors": ["The only supported layer type is footage."]
-        }
+    overlay_layers = [
+        layer for layer in layers
+        if layer["type"] == "overlay"
+    ]
 
-    engine = layer.get("engine")
-    operation = layer.get("operation")
-    parameters = layer.get("parameters", {})
+    if len(footage_layers) != 1 or len(overlay_layers) > 1:
+        return unsupported(
+            "Project requires exactly one footage layer "
+            "and at most one overlay layer."
+        )
+
+    footage = footage_layers[0]
+    overlay = overlay_layers[0] if overlay_layers else None
+
+    if footage["start_seconds"] != 0:
+        return unsupported(
+            "Primary footage must start at zero."
+        )
+
+    if footage["duration_seconds"] != timeline["duration_seconds"]:
+        return unsupported(
+            "Primary footage duration must match project duration."
+        )
+
+    engine = footage.get("engine")
+    operation = footage.get("operation")
+    parameters = footage.get("parameters", {})
 
     vfx_filters = ""
 
     if engine or operation:
         if engine != "vfx" or not operation:
-            return {
-                "ready": False,
-                "status": "unsupported_project",
-                "errors": [
-                    "Only a VFX engine operation is supported "
-                    "on the footage layer."
-                ]
-            }
+            return unsupported(
+                "Only a VFX engine operation is supported "
+                "on the primary footage layer."
+            )
 
         try:
             vfx_filters = build_vfx_filters(
@@ -114,63 +130,40 @@ def prepare_render_job(plan, project_root, output_path):
                 parameters
             )
         except ValueError as error:
-            return {
-                "ready": False,
-                "status": "unsupported_project",
-                "errors": [str(error)]
-            }
+            return unsupported(str(error))
 
-    if layer["start_seconds"] != 0:
-        return {
-            "ready": False,
-            "status": "unsupported_project",
-            "errors": ["The footage layer must start at zero."]
-        }
-
-    if layer["duration_seconds"] != timeline["duration_seconds"]:
-        return {
-            "ready": False,
-            "status": "unsupported_project",
-            "errors": ["Footage duration must match project duration."]
-        }
-
-    asset_id = layer.get("asset_id")
     assets = {
         asset["id"]: asset
         for asset in plan.get("assets", [])
     }
 
-    asset = assets.get(asset_id)
+    footage_asset = assets.get(footage.get("asset_id"))
 
-    if not asset or asset["type"] != "video":
-        return {
-            "ready": False,
-            "status": "unsupported_project",
-            "errors": ["Footage layer must reference a video asset."]
-        }
+    if not footage_asset or footage_asset["type"] != "video":
+        return unsupported(
+            "Primary footage must reference a video asset."
+        )
 
-    source = resolve_inside_root(root, asset["uri"])
+    source = resolve_inside_root(root, footage_asset["uri"])
 
     if not source.is_file():
         return {
             "ready": False,
             "status": "missing_asset",
-            "errors": [f"Source video does not exist: {asset['uri']}"]
-        }
-
-    if source == output:
-        return {
-            "ready": False,
-            "status": "invalid_output",
-            "errors": ["Output path cannot overwrite the source video."]
+            "errors": [
+                f"Source video does not exist: "
+                f"{footage_asset['uri']}"
+            ]
         }
 
     settings = plan["output"]
+    width = settings["width"]
+    height = settings["height"]
 
     filters = (
-        f"scale={settings['width']}:{settings['height']}:"
+        f"scale={width}:{height}:"
         "force_original_aspect_ratio=decrease,"
-        f"pad={settings['width']}:{settings['height']}:"
+        f"pad={width}:{height}:"
         "(ow-iw)/2:(oh-ih)/2"
     )
 
@@ -181,21 +174,168 @@ def prepare_render_job(plan, project_root, output_path):
         "ffmpeg",
         "-y",
         "-i", str(source),
+    ]
+
+    overlay_source = None
+    overlay_settings = None
+
+    if overlay:
+        if (
+            overlay.get("engine")
+            or overlay.get("operation")
+        ):
+            return unsupported(
+                "VFX operations on overlay layers "
+                "are not supported yet."
+            )
+
+        overlay_asset = assets.get(overlay.get("asset_id"))
+
+        if (
+            not overlay_asset
+            or overlay_asset["type"] != "video"
+        ):
+            return unsupported(
+                "Overlay layer must reference a video asset."
+            )
+
+        overlay_source = resolve_inside_root(
+            root, overlay_asset["uri"]
+        )
+
+        if not overlay_source.is_file():
+            return {
+                "ready": False,
+                "status": "missing_asset",
+                "errors": [
+                    "Overlay video does not exist: "
+                    + overlay_asset["uri"]
+                ]
+            }
+
+        if overlay_source == source:
+            return unsupported(
+                "Primary footage and overlay must use "
+                "different source files."
+            )
+
+        overlay_parameters = overlay.get("parameters", {})
+
+        if not isinstance(overlay_parameters, dict):
+            return unsupported(
+                "Overlay parameters must be an object."
+            )
+
+        x = overlay_parameters.get("x")
+        y = overlay_parameters.get("y")
+        overlay_width = overlay_parameters.get("width")
+        overlay_height = overlay_parameters.get("height")
+
+        for name, value in (
+            ("x", x),
+            ("y", y),
+            ("width", overlay_width),
+            ("height", overlay_height),
+        ):
+            if (
+                not isinstance(value, int)
+                or isinstance(value, bool)
+            ):
+                return unsupported(
+                    f"Overlay {name} must be an integer."
+                )
+
+        if x < 0 or y < 0:
+            return unsupported(
+                "Overlay x and y must not be negative."
+            )
+
+        if overlay_width <= 0 or overlay_height <= 0:
+            return unsupported(
+                "Overlay width and height must be positive."
+            )
+
+        if x + overlay_width > width:
+            return unsupported(
+                "Overlay exceeds the output width."
+            )
+
+        if y + overlay_height > height:
+            return unsupported(
+                "Overlay exceeds the output height."
+            )
+
+        overlay_start = overlay["start_seconds"]
+        overlay_duration = overlay["duration_seconds"]
+        overlay_end = overlay_start + overlay_duration
+
+        if overlay_end > timeline["duration_seconds"]:
+            return unsupported(
+                "Overlay extends beyond project duration."
+            )
+
+        overlay_settings = {
+            "x": x,
+            "y": y,
+            "width": overlay_width,
+            "height": overlay_height,
+            "start_seconds": overlay_start,
+            "duration_seconds": overlay_duration,
+        }
+
+        command.extend(["-i", str(overlay_source)])
+
+        filter_complex = (
+            f"[0:v]{filters}[base];"
+            f"[1:v]scale={overlay_width}:{overlay_height}"
+            "[overlay];"
+            f"[base][overlay]overlay="
+            f"x={x}:y={y}:"
+            f"enable='between(t,{overlay_start},{overlay_end})'"
+            "[vout]"
+        )
+
+        command.extend([
+            "-filter_complex", filter_complex,
+            "-map", "[vout]",
+            "-map", "0:a?",
+        ])
+
+    else:
+        command.extend([
+            "-vf", filters,
+        ])
+
+    if output == source or (
+        overlay_source is not None and output == overlay_source
+    ):
+        return {
+            "ready": False,
+            "status": "invalid_output",
+            "errors": [
+                "Output path cannot overwrite a source video."
+            ]
+        }
+
+    command.extend([
         "-t", str(timeline["duration_seconds"]),
-        "-vf", filters,
         "-r", str(settings["fps"]),
         "-c:v", "libx264",
         "-pix_fmt", "yuv420p",
         "-c:a", "aac",
         "-movflags", "+faststart",
         str(output)
-    ]
+    ])
 
     return {
         "ready": True,
         "status": "prepared",
         "renderer": "ffmpeg",
         "source": str(source),
+        "overlay_source": (
+            str(overlay_source) if overlay_source else None
+        ),
+        "overlay": overlay_settings,
         "output": str(output),
         "duration_seconds": timeline["duration_seconds"],
         "vfx_operation": operation if vfx_filters else None,
@@ -261,7 +401,10 @@ def main():
     parser = argparse.ArgumentParser(
         description="Welvox FFmpeg Adapter"
     )
-    parser.add_argument("plan", help="Path to production-plan JSON")
+    parser.add_argument(
+        "plan",
+        help="Path to production-plan JSON"
+    )
     parser.add_argument(
         "--project-root",
         default=".",
