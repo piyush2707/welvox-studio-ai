@@ -1,10 +1,8 @@
 
 """Welvox Studio AI - FFmpeg Rendering Adapter.
 
-Initial adapter for preparing and optionally executing
-simple single-clip video render jobs.
-
-Complex multi-layer projects are not supported yet.
+Supports one scene, one footage layer, and optional
+VFX color treatments applied directly to that footage.
 """
 
 import argparse
@@ -15,6 +13,7 @@ import sys
 from pathlib import Path
 
 from engine.core.welvox_core import load_plan, validate_plan
+from engine.effects.vfx_engine import build_vfx_filters
 
 
 def resolve_inside_root(root, value):
@@ -78,8 +77,8 @@ def prepare_render_job(plan, project_root, output_path):
             "status": "unsupported_project",
             "errors": [
                 "Initial adapter supports exactly one layer. "
-                "Effects, titles, overlays, and separate audio layers "
-                "are not implemented yet."
+                "Separate effects, titles, overlays, and audio "
+                "layers are not implemented yet."
             ]
         }
 
@@ -92,12 +91,34 @@ def prepare_render_job(plan, project_root, output_path):
             "errors": ["The only supported layer type is footage."]
         }
 
-    if layer.get("engine") or layer.get("operation"):
-        return {
-            "ready": False,
-            "status": "unsupported_project",
-            "errors": ["Engine operations are not supported by this adapter yet."]
-        }
+    engine = layer.get("engine")
+    operation = layer.get("operation")
+    parameters = layer.get("parameters", {})
+
+    vfx_filters = ""
+
+    if engine or operation:
+        if engine != "vfx" or not operation:
+            return {
+                "ready": False,
+                "status": "unsupported_project",
+                "errors": [
+                    "Only a VFX engine operation is supported "
+                    "on the footage layer."
+                ]
+            }
+
+        try:
+            vfx_filters = build_vfx_filters(
+                operation,
+                parameters
+            )
+        except ValueError as error:
+            return {
+                "ready": False,
+                "status": "unsupported_project",
+                "errors": [str(error)]
+            }
 
     if layer["start_seconds"] != 0:
         return {
@@ -146,18 +167,22 @@ def prepare_render_job(plan, project_root, output_path):
 
     settings = plan["output"]
 
+    filters = (
+        f"scale={settings['width']}:{settings['height']}:"
+        "force_original_aspect_ratio=decrease,"
+        f"pad={settings['width']}:{settings['height']}:"
+        "(ow-iw)/2:(oh-ih)/2"
+    )
+
+    if vfx_filters:
+        filters += "," + vfx_filters
+
     command = [
         "ffmpeg",
         "-y",
         "-i", str(source),
         "-t", str(timeline["duration_seconds"]),
-        "-vf",
-        (
-            f"scale={settings['width']}:{settings['height']}:"
-            "force_original_aspect_ratio=decrease,"
-            f"pad={settings['width']}:{settings['height']}:"
-            "(ow-iw)/2:(oh-ih)/2"
-        ),
+        "-vf", filters,
         "-r", str(settings["fps"]),
         "-c:v", "libx264",
         "-pix_fmt", "yuv420p",
@@ -173,6 +198,7 @@ def prepare_render_job(plan, project_root, output_path):
         "source": str(source),
         "output": str(output),
         "duration_seconds": timeline["duration_seconds"],
+        "vfx_operation": operation if vfx_filters else None,
         "command": command,
         "execution_performed": False
     }
@@ -279,4 +305,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-      
+    
