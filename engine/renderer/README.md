@@ -1,32 +1,42 @@
-
 # Welvox Rendering Engine
 
 The rendering engine connects validated production plans to media-rendering tools.
 
 ## Current FFmpeg Adapter
 
-The first functional FFmpeg adapter supports a deliberately limited workflow:
+The current FFmpeg adapter supports a limited but functional workflow:
 
-- One scene.
-- One video footage layer.
-- One video asset.
-- Scene and footage start at zero.
-- Scene, footage, and project durations match.
+- One scene per project.
+- One primary video footage layer.
+- Optional one-video picture-in-picture overlay.
+- VFX operations on the primary footage.
 - MP4 output using H.264 video.
-- AAC audio output.
+- AAC audio output from the primary footage.
 - Scaling and padding to requested output dimensions.
+- Dry-run command preparation.
+- Optional real FFmpeg execution.
 
-## VFX Integration
+Unsupported projects are rejected instead of being silently rendered incorrectly.
 
-The adapter supports VFX operations directly on the footage layer.
+## Primary Footage
 
-Currently supported operations:
+The primary footage layer must:
+
+- Reference a video asset.
+- Start at zero.
+- Match the project duration.
+- Use a supported VFX operation if an engine operation is specified.
+
+## Supported VFX Operations
+
+The adapter currently supports these operations on primary footage:
 
 - `cinematic_grade` — cinematic contrast, saturation, color balance, and vignette.
 - `tech_neon_grade` — stronger saturation and a blue-toned technology aesthetic.
 - `vignette` — adjustable vignette using a validated angle parameter.
+- `film_grain` — animated film grain using a validated strength parameter.
 
-Example production-plan layer:
+Example:
 
 ```json
 {
@@ -38,56 +48,3 @@ Example production-plan layer:
   "engine": "vfx",
   "operation": "cinematic_grade"
 }
-```
-
-The VFX engine builds the FFmpeg filter chain, and the renderer applies it during video rendering.
-
-Separate VFX layers and complex compositing are not supported yet.
-
-## Dry-run Mode
-
-Dry-run is the default. It prepares an FFmpeg command without executing it.
-
-```bash
-python engine/renderer/ffmpeg_adapter.py \
-  examples/simple-video-plan.json \
-  --project-root . \
-  --output output/preview.mp4
-```
-
-## Execute a Render
-
-Actual rendering requires FFmpeg to be installed and available in PATH.
-
-```bash
-python engine/renderer/ffmpeg_adapter.py \
-  examples/simple-video-plan.json \
-  --project-root . \
-  --output output/preview.mp4 \
-  --execute
-```
-
-Only use `--execute` when the source asset and rendering environment are ready.
-
-## Current Limitations
-
-The adapter does not yet support:
-
-- Multiple scenes or clips.
-- Transitions.
-- Text overlays.
-- Separate VFX or motion layers.
-- Advanced compositing.
-- Separate audio tracks.
-- 3D assets.
-- Automated visual quality review.
-
-Unsupported projects are rejected rather than silently rendered incorrectly.
-
-## Safety
-
-- Project asset and output paths must remain inside the project root.
-- Output cannot overwrite the source video.
-- Dry-run does not execute external programs.
-- Rendering is only reported as successful after FFmpeg exits successfully and the output file exists.
-- 
