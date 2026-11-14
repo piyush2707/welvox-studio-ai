@@ -55,6 +55,98 @@ class RendererAdapterTests(unittest.TestCase):
         self.assertFalse(job["execution_performed"])
         self.assertIn("ffmpeg", job["command"])
 
+    def test_cinematic_grade_is_added_to_command(self):
+        layer = self.plan["timeline"]["scenes"][0]["layers"][0]
+        layer["engine"] = "vfx"
+        layer["operation"] = "cinematic_grade"
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/cinematic.mp4"
+        )
+
+        self.assertTrue(job["ready"])
+        self.assertEqual(job["vfx_operation"], "cinematic_grade")
+
+        filters = job["command"][job["command"].index("-vf") + 1]
+        self.assertIn("colorbalance=", filters)
+        self.assertIn("vignette=", filters)
+
+    def test_tech_neon_grade_is_added_to_command(self):
+        layer = self.plan["timeline"]["scenes"][0]["layers"][0]
+        layer["engine"] = "vfx"
+        layer["operation"] = "tech_neon_grade"
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/neon.mp4"
+        )
+
+        self.assertTrue(job["ready"])
+        filters = job["command"][job["command"].index("-vf") + 1]
+        self.assertIn("saturation=1.45", filters)
+
+    def test_custom_vignette_is_added_to_command(self):
+        layer = self.plan["timeline"]["scenes"][0]["layers"][0]
+        layer["engine"] = "vfx"
+        layer["operation"] = "vignette"
+        layer["parameters"] = {"angle": 0.8}
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/vignette.mp4"
+        )
+
+        self.assertTrue(job["ready"])
+        filters = job["command"][job["command"].index("-vf") + 1]
+        self.assertIn("vignette=", filters)
+
+    def test_unknown_vfx_operation_is_rejected(self):
+        layer = self.plan["timeline"]["scenes"][0]["layers"][0]
+        layer["engine"] = "vfx"
+        layer["operation"] = "unknown_effect"
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/invalid.mp4"
+        )
+
+        self.assertFalse(job["ready"])
+        self.assertEqual(job["status"], "unsupported_project")
+
+    def test_non_vfx_engine_operation_is_rejected(self):
+        layer = self.plan["timeline"]["scenes"][0]["layers"][0]
+        layer["engine"] = "motion"
+        layer["operation"] = "unknown_motion"
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/invalid.mp4"
+        )
+
+        self.assertFalse(job["ready"])
+        self.assertEqual(job["status"], "unsupported_project")
+
+    def test_invalid_vignette_parameters_are_rejected(self):
+        layer = self.plan["timeline"]["scenes"][0]["layers"][0]
+        layer["engine"] = "vfx"
+        layer["operation"] = "vignette"
+        layer["parameters"] = {"angle": 5}
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/invalid.mp4"
+        )
+
+        self.assertFalse(job["ready"])
+        self.assertEqual(job["status"], "unsupported_project")
+
     def test_missing_source_is_rejected(self):
         self.plan["assets"][0]["uri"] = "assets/missing.mp4"
 
@@ -120,4 +212,4 @@ class RendererAdapterTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-  
+    
