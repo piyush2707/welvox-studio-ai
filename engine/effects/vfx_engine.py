@@ -1,6 +1,7 @@
+
 """Welvox VFX Engine.
 
-First functional version: cinematic color treatments.
+Supports cinematic color treatments and film grain.
 Compositing, particles, tracking and animated effects
 will be implemented in later versions.
 """
@@ -42,6 +43,21 @@ def build_vfx_filters(operation, parameters=None):
 
         return f"vignette=PI/{3.141592653589793 / angle:.4f}"
 
+    if operation == "film_grain":
+        strength = parameters.get("strength", 12)
+
+        if (
+            not isinstance(strength, (int, float))
+            or isinstance(strength, bool)
+            or not 1 <= strength <= 100
+        ):
+            raise ValueError(
+                "Film grain strength must be between 1 and 100."
+            )
+
+        return f"noise=alls={strength}:allf=t"
+
     raise ValueError(
         f"Unsupported VFX operation: {operation}"
     )
+    
