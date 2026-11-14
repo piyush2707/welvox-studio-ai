@@ -1,4 +1,3 @@
-
 """Tests for the Welvox FFmpeg rendering adapter."""
 
 import copy
@@ -27,7 +26,21 @@ class RendererAdapterTests(unittest.TestCase):
         source.parent.mkdir(parents=True)
         source.write_bytes(b"test video placeholder")
 
-        self.plan["assets"][0]["uri"] = "assets/source.mp4"
+        overlay_source = self.root / "assets" / "overlay.mp4"
+        overlay_source.write_bytes(b"overlay video placeholder")
+
+        self.plan["assets"] = [
+            {
+                "id": "main-footage",
+                "type": "video",
+                "uri": "assets/source.mp4"
+            },
+            {
+                "id": "overlay-footage",
+                "type": "video",
+                "uri": "assets/overlay.mp4"
+            }
+        ]
 
         scene = self.plan["timeline"]["scenes"][0]
         scene["layers"] = [
@@ -42,6 +55,21 @@ class RendererAdapterTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp.cleanup()
+
+    def add_overlay(self):
+        self.plan["timeline"]["scenes"][0]["layers"].append({
+            "id": "picture-in-picture",
+            "type": "overlay",
+            "asset_id": "overlay-footage",
+            "start_seconds": 2,
+            "duration_seconds": 3,
+            "parameters": {
+                "x": 20,
+                "y": 30,
+                "width": 120,
+                "height": 90
+            }
+        })
 
     def test_simple_project_prepares_dry_run(self):
         job = prepare_render_job(
@@ -176,6 +204,144 @@ class RendererAdapterTests(unittest.TestCase):
         self.assertFalse(job["ready"])
         self.assertEqual(job["status"], "unsupported_project")
 
+    def test_overlay_prepares_picture_in_picture_command(self):
+        self.add_overlay()
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/picture-in-picture.mp4"
+        )
+
+        self.assertTrue(job["ready"], msg=str(job))
+        self.assertEqual(job["status"], "prepared")
+        self.assertEqual(
+            job["overlay"],
+            {
+                "x": 20,
+                "y": 30,
+                "width": 120,
+                "height": 90,
+                "start_seconds": 2,
+                "duration_seconds": 3
+            }
+        )
+
+        command = job["command"]
+        self.assertIn("-filter_complex", command)
+        self.assertIn("[vout]", command)
+        self.assertIn("overlay=x=20:y=30", command)
+        self.assertIn("between(t,2,5)", command)
+
+    def test_overlay_rejects_negative_position(self):
+        self.add_overlay()
+        overlay = self.plan["timeline"]["scenes"][0]["layers"][1]
+        overlay["parameters"]["x"] = -1
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/invalid.mp4"
+        )
+
+        self.assertFalse(job["ready"])
+        self.assertEqual(job["status"], "unsupported_project")
+
+    def test_overlay_rejects_size_outside_output(self):
+        self.add_overlay()
+        overlay = self.plan["timeline"]["scenes"][0]["layers"][1]
+        overlay["parameters"]["width"] = 9999
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/invalid.mp4"
+        )
+
+        self.assertFalse(job["ready"])
+        self.assertEqual(job["status"], "unsupported_project")
+
+    def test_overlay_rejects_non_integer_dimensions(self):
+        self.add_overlay()
+        overlay = self.plan["timeline"]["scenes"][0]["layers"][1]
+        overlay["parameters"]["width"] = 120.5
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/invalid.mp4"
+        )
+
+        self.assertFalse(job["ready"])
+        self.assertEqual(job["status"], "unsupported_project")
+
+    def test_overlay_rejects_boolean_dimensions(self):
+        self.add_overlay()
+        overlay = self.plan["timeline"]["scenes"][0]["layers"][1]
+        overlay["parameters"]["width"] = True
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/invalid.mp4"
+        )
+
+        self.assertFalse(job["ready"])
+        self.assertEqual(job["status"], "unsupported_project")
+
+    def test_overlay_rejects_duration_past_timeline(self):
+        self.add_overlay()
+        overlay = self.plan["timeline"]["scenes"][0]["layers"][1]
+        overlay["start_seconds"] = 7
+        overlay["duration_seconds"] = 2
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/invalid.mp4"
+        )
+
+        self.assertFalse(job["ready"])
+        self.assertEqual(job["status"], "unsupported_project")
+
+    def test_overlay_rejects_missing_video_asset(self):
+        self.add_overlay()
+        self.plan["assets"][1]["uri"] = "assets/missing-overlay.mp4"
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/invalid.mp4"
+        )
+
+        self.assertFalse(job["ready"])
+        self.assertEqual(job["status"], "missing_asset")
+
+    def test_overlay_rejects_same_source_as_primary(self):
+        self.add_overlay()
+        self.plan["assets"][1]["uri"] = "assets/source.mp4"
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/invalid.mp4"
+        )
+
+        self.assertFalse(job["ready"])
+        self.assertEqual(job["status"], "unsupported_project")
+
+    def test_overlay_cannot_overwrite_overlay_source(self):
+        self.add_overlay()
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "assets/overlay.mp4"
+        )
+
+        self.assertFalse(job["ready"])
+        self.assertEqual(job["status"], "invalid_output")
+
     def test_invalid_plan_is_rejected(self):
         plan = copy.deepcopy(self.plan)
         del plan["output"]
@@ -212,4 +378,3 @@ class RendererAdapterTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-    
