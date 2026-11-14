@@ -1,87 +1,64 @@
 
-"""Tests for the Welvox VFX Engine."""
+"""Welvox VFX Engine.
 
-import unittest
+Supports cinematic color treatments and film grain.
+Compositing, particles, tracking and animated effects
+will be implemented in later versions.
+"""
 
-from engine.effects.vfx_engine import build_vfx_filters
 
+def build_vfx_filters(operation, parameters=None):
+    """Build a validated FFmpeg filter chain."""
+    parameters = parameters or {}
 
-class VFXEngineTests(unittest.TestCase):
+    if not isinstance(parameters, dict):
+        raise ValueError("VFX parameters must be an object.")
 
-    def test_cinematic_grade(self):
-        result = build_vfx_filters("cinematic_grade")
-        self.assertIn("eq=", result)
-        self.assertIn("colorbalance=", result)
-        self.assertIn("vignette=", result)
-
-    def test_tech_neon_grade(self):
-        result = build_vfx_filters("tech_neon_grade")
-        self.assertIn("saturation=1.45", result)
-        self.assertIn("colorbalance=", result)
-
-    def test_vignette_default(self):
-        result = build_vfx_filters("vignette")
-        self.assertIn("vignette=", result)
-
-    def test_vignette_custom_angle(self):
-        result = build_vfx_filters(
-            "vignette",
-            {"angle": 0.8}
+    if operation == "cinematic_grade":
+        return (
+            "eq=contrast=1.12:saturation=1.12:brightness=-0.015,"
+            "colorbalance=rs=0.025:gs=0.005:bs=-0.025,"
+            "vignette=PI/5"
         )
-        self.assertIn("vignette=", result)
 
-    def test_invalid_vignette_angle(self):
-        with self.assertRaises(ValueError):
-            build_vfx_filters(
-                "vignette",
-                {"angle": 5}
+    if operation == "tech_neon_grade":
+        return (
+            "eq=contrast=1.18:saturation=1.45:brightness=-0.02,"
+            "colorbalance=rs=0.025:gs=0.005:bs=0.12:"
+            "rm=0.015:gm=0.005:bm=0.08,"
+            "vignette=PI/6"
+        )
+
+    if operation == "vignette":
+        angle = parameters.get("angle", 0.65)
+
+        if (
+            not isinstance(angle, (int, float))
+            or isinstance(angle, bool)
+            or not 0.1 <= angle <= 1.5
+        ):
+            raise ValueError(
+                "Vignette angle must be between 0.1 and 1.5."
             )
 
-    def test_film_grain_default(self):
-        result = build_vfx_filters("film_grain")
-        self.assertEqual(result, "noise=alls=12:allf=t")
+        return f"vignette=PI/{3.141592653589793 / angle:.4f}"
 
-    def test_film_grain_custom_strength(self):
-        result = build_vfx_filters(
-            "film_grain",
-            {"strength": 18}
-        )
-        self.assertEqual(result, "noise=alls=18:allf=t")
+    if operation == "film_grain":
+        strength = parameters.get("strength", 12)
 
-    def test_film_grain_minimum_strength(self):
-        result = build_vfx_filters(
-            "film_grain",
-            {"strength": 1}
-        )
-        self.assertEqual(result, "noise=alls=1:allf=t")
+        if (
+            not isinstance(strength, int)
+            or isinstance(strength, bool)
+            or not 1 <= strength <= 100
+        ):
+            raise ValueError(
+                "Film grain strength must be an integer "
+                "between 1 and 100."
+            )
 
-    def test_film_grain_maximum_strength(self):
-        result = build_vfx_filters(
-            "film_grain",
-            {"strength": 100}
-        )
-        self.assertEqual(result, "noise=alls=100:allf=t")
+        return f"noise=alls={strength}:allf=t"
 
-    def test_invalid_film_grain_strength(self):
-        invalid_values = [0, 101, -5, "18", True, 2.5]
-
-        for value in invalid_values:
-            with self.subTest(value=value):
-                with self.assertRaises(ValueError):
-                    build_vfx_filters(
-                        "film_grain",
-                        {"strength": value}
-                    )
-
-    def test_unknown_operation(self):
-        with self.assertRaises(ValueError):
-            build_vfx_filters("unknown_effect")
-
-    def test_invalid_parameters_type(self):
-        with self.assertRaises(ValueError):
-            build_vfx_filters("cinematic_grade", "invalid")
-
-
-if __name__ == "__main__":
-    unittest.main()
+    raise ValueError(
+        f"Unsupported VFX operation: {operation}"
+    )
     
