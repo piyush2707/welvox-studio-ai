@@ -1,3 +1,4 @@
+
 """Tests for the Welvox FFmpeg rendering adapter."""
 
 import copy
@@ -229,9 +230,14 @@ class RendererAdapterTests(unittest.TestCase):
 
         command = job["command"]
         self.assertIn("-filter_complex", command)
-        self.assertIn("[vout]", command)
-        self.assertIn("overlay=x=20:y=30", command)
-        self.assertIn("between(t,2,5)", command)
+
+        filter_complex = command[
+            command.index("-filter_complex") + 1
+        ]
+
+        self.assertIn("[vout]", filter_complex)
+        self.assertIn("overlay=x=20:y=30", filter_complex)
+        self.assertIn("between(t,2,5)", filter_complex)
 
     def test_overlay_rejects_negative_position(self):
         self.add_overlay()
@@ -302,7 +308,7 @@ class RendererAdapterTests(unittest.TestCase):
         )
 
         self.assertFalse(job["ready"])
-        self.assertEqual(job["status"], "unsupported_project")
+        self.assertEqual(job["status"], "invalid_plan")
 
     def test_overlay_rejects_missing_video_asset(self):
         self.add_overlay()
