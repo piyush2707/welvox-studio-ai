@@ -1,3 +1,4 @@
+
 """Tests for the Welvox VFX Engine."""
 
 import unittest
@@ -36,6 +37,42 @@ class VFXEngineTests(unittest.TestCase):
                 {"angle": 5}
             )
 
+    def test_film_grain_default(self):
+        result = build_vfx_filters("film_grain")
+        self.assertEqual(result, "noise=alls=12:allf=t")
+
+    def test_film_grain_custom_strength(self):
+        result = build_vfx_filters(
+            "film_grain",
+            {"strength": 18}
+        )
+        self.assertEqual(result, "noise=alls=18:allf=t")
+
+    def test_film_grain_minimum_strength(self):
+        result = build_vfx_filters(
+            "film_grain",
+            {"strength": 1}
+        )
+        self.assertEqual(result, "noise=alls=1:allf=t")
+
+    def test_film_grain_maximum_strength(self):
+        result = build_vfx_filters(
+            "film_grain",
+            {"strength": 100}
+        )
+        self.assertEqual(result, "noise=alls=100:allf=t")
+
+    def test_invalid_film_grain_strength(self):
+        invalid_values = [0, 101, -5, "18", True, 2.5]
+
+        for value in invalid_values:
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):
+                    build_vfx_filters(
+                        "film_grain",
+                        {"strength": value}
+                    )
+
     def test_unknown_operation(self):
         with self.assertRaises(ValueError):
             build_vfx_filters("unknown_effect")
@@ -47,3 +84,4 @@ class VFXEngineTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+    
