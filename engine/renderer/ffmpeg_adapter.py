@@ -3,7 +3,7 @@
 
 Supports one scene with:
 - One primary footage layer.
-- Optional VFX on the primary footage.
+- Optional VFX on primary footage.
 - Optional one-video picture-in-picture overlay.
 """
 
@@ -92,10 +92,15 @@ def prepare_render_job(plan, project_root, output_path):
         if layer["type"] == "overlay"
     ]
 
-    if len(footage_layers) != 1 or len(overlay_layers) > 1:
+    if (
+        len(footage_layers) != 1
+        or len(overlay_layers) > 1
+        or len(footage_layers) + len(overlay_layers) != len(layers)
+    ):
         return unsupported(
             "Project requires exactly one footage layer "
-            "and at most one overlay layer."
+            "and at most one video overlay. Other layer "
+            "types are not supported."
         )
 
     footage = footage_layers[0]
@@ -151,8 +156,7 @@ def prepare_render_job(plan, project_root, output_path):
             "ready": False,
             "status": "missing_asset",
             "errors": [
-                f"Source video does not exist: "
-                f"{footage_asset['uri']}"
+                f"Source video does not exist: {footage_asset['uri']}"
             ]
         }
 
@@ -180,10 +184,7 @@ def prepare_render_job(plan, project_root, output_path):
     overlay_settings = None
 
     if overlay:
-        if (
-            overlay.get("engine")
-            or overlay.get("operation")
-        ):
+        if overlay.get("engine") or overlay.get("operation"):
             return unsupported(
                 "VFX operations on overlay layers "
                 "are not supported yet."
