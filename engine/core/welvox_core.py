@@ -1,4 +1,3 @@
-
 """Welvox Studio AI - Core Engine.
 
 Standard-library foundation for capability detection,
@@ -60,7 +59,7 @@ def load_plan(file_path):
 
 
 def validate_plan(plan):
-    """Perform built-in structural and timeline checks."""
+    """Perform structural and timeline checks."""
     errors = []
     warnings = []
 
@@ -107,30 +106,60 @@ def validate_plan(plan):
         errors.append("timeline must be an object.")
         timeline = {}
 
-    if not isinstance(project.get("title"), str) or not project.get("title"):
+    if (
+        not isinstance(project.get("title"), str)
+        or not project.get("title")
+    ):
         errors.append("project.title must be a non-empty string.")
 
-    if not isinstance(project.get("creative_brief"), str) or not project.get("creative_brief"):
-        errors.append("project.creative_brief must be a non-empty string.")
+    if (
+        not isinstance(project.get("creative_brief"), str)
+        or not project.get("creative_brief")
+    ):
+        errors.append(
+            "project.creative_brief must be a non-empty string."
+        )
 
     for field in ["width", "height"]:
         value = output.get(field)
-        if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
-            errors.append(f"output.{field} must be a positive integer.")
+
+        if (
+            not isinstance(value, int)
+            or isinstance(value, bool)
+            or value <= 0
+        ):
+            errors.append(
+                f"output.{field} must be a positive integer."
+            )
 
     fps = output.get("fps")
-    if not isinstance(fps, (int, float)) or isinstance(fps, bool) or not 0 < fps <= 240:
-        errors.append("output.fps must be greater than 0 and at most 240.")
+
+    if (
+        not isinstance(fps, (int, float))
+        or isinstance(fps, bool)
+        or not 0 < fps <= 240
+    ):
+        errors.append(
+            "output.fps must be greater than 0 and at most 240."
+        )
 
     if output.get("format") not in OUTPUT_FORMATS:
         errors.append("output.format must be mp4, mov, or webm.")
 
     duration = timeline.get("duration_seconds")
-    if not isinstance(duration, (int, float)) or isinstance(duration, bool) or duration <= 0:
-        errors.append("timeline.duration_seconds must be positive.")
+
+    if (
+        not isinstance(duration, (int, float))
+        or isinstance(duration, bool)
+        or duration <= 0
+    ):
+        errors.append(
+            "timeline.duration_seconds must be positive."
+        )
         duration = 0
 
     assets = plan.get("assets", [])
+
     if not isinstance(assets, list):
         errors.append("assets must be an array.")
         assets = []
@@ -143,6 +172,7 @@ def validate_plan(plan):
             continue
 
         asset_id = asset.get("id")
+
         if not isinstance(asset_id, str) or not asset_id:
             errors.append("Every asset needs a non-empty id.")
         elif asset_id in asset_ids:
@@ -153,12 +183,18 @@ def validate_plan(plan):
         if asset.get("type") not in {
             "video", "image", "audio", "font", "model"
         }:
-            errors.append(f"Invalid asset type: {asset.get('type')}")
+            errors.append(
+                f"Invalid asset type: {asset.get('type')}"
+            )
 
-        if not isinstance(asset.get("uri"), str) or not asset.get("uri"):
+        if (
+            not isinstance(asset.get("uri"), str)
+            or not asset.get("uri")
+        ):
             errors.append(f"Asset {asset_id} needs a uri.")
 
     scenes = timeline.get("scenes")
+
     if not isinstance(scenes, list):
         errors.append("timeline.scenes must be an array.")
         scenes = []
@@ -171,6 +207,7 @@ def validate_plan(plan):
             continue
 
         scene_id = scene.get("id")
+
         if not isinstance(scene_id, str) or not scene_id:
             errors.append("Every scene needs a non-empty id.")
         elif scene_id in scene_ids:
@@ -181,49 +218,133 @@ def validate_plan(plan):
         start = scene.get("start_seconds")
         length = scene.get("duration_seconds")
 
-        if not isinstance(start, (int, float)) or isinstance(start, bool) or start < 0:
-            errors.append(f"Scene {scene_id} has an invalid start time.")
+        if (
+            not isinstance(start, (int, float))
+            or isinstance(start, bool)
+            or start < 0
+        ):
+            errors.append(
+                f"Scene {scene_id} has an invalid start time."
+            )
             continue
 
-        if not isinstance(length, (int, float)) or isinstance(length, bool) or length <= 0:
-            errors.append(f"Scene {scene_id} has an invalid duration.")
+        if (
+            not isinstance(length, (int, float))
+            or isinstance(length, bool)
+            or length <= 0
+        ):
+            errors.append(
+                f"Scene {scene_id} has an invalid duration."
+            )
             continue
 
         if start + length > duration:
-            errors.append(f"Scene {scene_id} extends beyond the project duration.")
+            errors.append(
+                f"Scene {scene_id} extends beyond the project duration."
+            )
 
         layers = scene.get("layers")
+
         if not isinstance(layers, list):
-            errors.append(f"Scene {scene_id} layers must be an array.")
+            errors.append(
+                f"Scene {scene_id} layers must be an array."
+            )
             continue
 
         layer_ids = set()
 
         for layer in layers:
             if not isinstance(layer, dict):
-                errors.append(f"Scene {scene_id} contains a non-object layer.")
+                errors.append(
+                    f"Scene {scene_id} contains a non-object layer."
+                )
                 continue
 
             layer_id = layer.get("id")
+
             if not isinstance(layer_id, str) or not layer_id:
-                errors.append(f"Scene {scene_id} has a layer without an id.")
+                errors.append(
+                    f"Scene {scene_id} has a layer without an id."
+                )
             elif layer_id in layer_ids:
-                errors.append(f"Duplicate layer id in scene {scene_id}: {layer_id}")
+                errors.append(
+                    f"Duplicate layer id in scene {scene_id}: "
+                    f"{layer_id}"
+                )
             else:
                 layer_ids.add(layer_id)
 
             if layer.get("type") not in LAYER_TYPES:
-                errors.append(f"Layer {layer_id} has an invalid type.")
+                errors.append(
+                    f"Layer {layer_id} has an invalid type."
+                )
 
             engine = layer.get("engine")
+
             if engine is not None and engine not in ENGINE_NAMES:
-                errors.append(f"Layer {layer_id} has an invalid engine.")
+                errors.append(
+                    f"Layer {layer_id} has an invalid engine."
+                )
 
             asset_id = layer.get("asset_id")
+
             if asset_id is not None and asset_id not in asset_ids:
                 errors.append(
-                    f"Layer {layer_id} references unknown asset: {asset_id}"
+                    f"Layer {layer_id} references unknown asset: "
+                    f"{asset_id}"
                 )
+
+            operation = layer.get("operation")
+            effects = layer.get("effects")
+
+            if effects is not None:
+                if operation:
+                    errors.append(
+                        f"Layer {layer_id} cannot define both "
+                        "operation and effects."
+                    )
+
+                if engine != "vfx":
+                    errors.append(
+                        f"Layer {layer_id} effect stacks require "
+                        "the vfx engine."
+                    )
+
+                if not isinstance(effects, list) or not effects:
+                    errors.append(
+                        f"Layer {layer_id} effects must be a "
+                        "non-empty array."
+                    )
+                else:
+                    for index, effect in enumerate(effects):
+                        if not isinstance(effect, dict):
+                            errors.append(
+                                f"Layer {layer_id} effect "
+                                f"{index} must be an object."
+                            )
+                            continue
+
+                        effect_operation = effect.get("operation")
+
+                        if (
+                            not isinstance(effect_operation, str)
+                            or not effect_operation.strip()
+                        ):
+                            errors.append(
+                                f"Layer {layer_id} effect "
+                                f"{index} needs a non-empty operation."
+                            )
+
+                        parameters = effect.get("parameters")
+
+                        if (
+                            parameters is not None
+                            and not isinstance(parameters, dict)
+                        ):
+                            errors.append(
+                                f"Layer {layer_id} effect "
+                                f"{index} parameters must be an object."
+                            )
 
             layer_start = layer.get("start_seconds")
             layer_length = layer.get("duration_seconds")
@@ -233,7 +354,9 @@ def validate_plan(plan):
                 or isinstance(layer_start, bool)
                 or layer_start < start
             ):
-                errors.append(f"Layer {layer_id} has an invalid start time.")
+                errors.append(
+                    f"Layer {layer_id} has an invalid start time."
+                )
                 continue
 
             if (
@@ -241,11 +364,15 @@ def validate_plan(plan):
                 or isinstance(layer_length, bool)
                 or layer_length <= 0
             ):
-                errors.append(f"Layer {layer_id} has an invalid duration.")
+                errors.append(
+                    f"Layer {layer_id} has an invalid duration."
+                )
                 continue
 
             if layer_start + layer_length > start + length:
-                errors.append(f"Layer {layer_id} extends beyond its scene.")
+                errors.append(
+                    f"Layer {layer_id} extends beyond its scene."
+                )
 
     if not scenes:
         warnings.append("The timeline contains no scenes.")
@@ -277,7 +404,10 @@ def main():
     parser = argparse.ArgumentParser(
         description="Welvox Studio AI Core Engine"
     )
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers = parser.add_subparsers(
+        dest="command",
+        required=True
+    )
 
     subparsers.add_parser("capabilities")
 
@@ -300,6 +430,7 @@ def main():
             result = inspect_plan(load_plan(args.plan))
 
         print(json.dumps(result, indent=2))
+
         if args.command == "validate" and not result["valid"]:
             sys.exit(1)
 
@@ -310,4 +441,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-                          
