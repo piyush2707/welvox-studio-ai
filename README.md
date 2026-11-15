@@ -1,6 +1,8 @@
-# Welvox Studio AI
+<div align="center">
 
-An AI-agent-powered video production system built with Python and FFmpeg.
+# 🎬 Welvox Studio AI
+
+### 59 FFmpeg visual effects, directed by your AI coding agent.
 
 [![Version](https://img.shields.io/badge/Version-1.0.0-blue)](https://github.com/piyush2707/welvox-studio-ai/releases/tag/v1.0.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -9,57 +11,113 @@ An AI-agent-powered video production system built with Python and FFmpeg.
 
 Made by [Piyush Joshi](https://www.linkedin.com/in/piyush2707)
 
----
-
-## Overview
-
-Welvox Studio AI is an open-source toolkit that connects AI coding agents to a structured video production workflow and an FFmpeg rendering engine. Describe what you want in natural language, and your agent plans, validates and renders it.
-
-**What's included**
-
-- Portable AI Agent Skill
-- Python core engine
-- JSON production-plan system
-- 59 FFmpeg visual effects with ordered effect stacks
-- FFmpeg rendering adapter
-- Integrations for Claude Code, OpenAI Codex and Gemini CLI
-- Unit and rendering integration tests
-
-## V1.0.0: First Public Release
-
-- 59 registered visual effects
-- Effect-stack construction and validation
-- Production-plan validation
-- FFmpeg rendering with real execution tests
-- Shared portable Agent Skill
-
-[View the release](https://github.com/piyush2707/welvox-studio-ai/releases/tag/v1.0.0)
+</div>
 
 ---
 
-## VFX Library
+## ✨ What is it?
 
-59 effects, registered in `engine/effects/vfx_engine.py`. Full catalog: [`docs/VFX-EFFECT-CATALOG.md`](docs/VFX-EFFECT-CATALOG.md)
+Welvox Studio AI is an open-source video production toolkit for AI coding agents. Tell **Claude Code, OpenAI Codex or Gemini CLI** what look you want. The agent picks effects, builds a JSON production plan, validates it and renders with FFmpeg.
 
-| Category | Count | Effect IDs |
-|---|---|---|
-| Cinematic and color grading | 27 | `cinematic_grade`, `tech_neon_grade`, `warm_glow`, `cold_steel`, `sunset_tone`, `teal_orange`, `vintage_film`, `golden_hour`, `cool_blue`, `dark_cinema`, `bright_pop`, `poster_tone`, `fade_wash`, `color_pop`, `warm_monochrome`, `cool_monochrome`, `noir`, `monochrome`, `sepia`, `high_contrast`, `soft_contrast`, `vivid_color`, `muted_color`, `bleach_bypass`, `lifted_blacks`, `crushed_blacks`, `film_fade` |
-| Blur, focus and detail | 12 | `dream_soft`, `soft_focus`, `gaussian_blur`, `box_blur`, `sharpen`, `clarity`, `edge_detect`, `emboss`, `fisheye`, `soft_vignette`, `strong_vignette`, `vignette` |
-| Motion and distortion | 10 | `motion_blend`, `frame_ghost`, `rgb_glitch`, `hue_shift`, `pixelate`, `rotate_clockwise`, `rotate_counterclockwise`, `mirror_horizontal`, `flip_vertical`, `negative` |
-| Texture and overlays | 10 | `film_grain`, `subtle_grain`, `heavy_grain`, `vhs_tape`, `tv_static`, `scanlines`, `grid_overlay`, `crosshair`, `letterbox`, `neon_edges` |
+**🎞️ 59 effects · 🔗 Stackable in any order · 🤖 3 agent integrations · ✅ Tested with real FFmpeg renders**
 
-### Custom parameters
+---
 
-Only two effects accept parameters. All others use built-in settings and reject custom values.
+## 🎨 The VFX Library
 
-| Effect | Parameter | Type | Range | Default |
-|---|---|---|---|---|
-| `vignette` | `angle` | Number | 0.1 to 1.5 | 0.65 |
-| `film_grain` | `strength` | Integer | 1 to 100 | 12 |
+All effect IDs are the exact names registered in `engine/effects/vfx_engine.py`. Full catalog: [`docs/VFX-EFFECT-CATALOG.md`](docs/VFX-EFFECT-CATALOG.md)
 
-### Effect stacks
+### 🎥 Cinematic and Color Grading (27)
 
-Chain multiple effects in order. The stack is validated and converted into an FFmpeg filter chain (`engine/effects/effect_stack.py`).
+| Effect ID | Look |
+|---|---|
+| `cinematic_grade` | Balanced contrast, saturation, color balance and vignette |
+| `tech_neon_grade` | High-saturation, blue-toned tech aesthetic |
+| `warm_glow` | Warm highlights with soft diffusion |
+| `cold_steel` | Cool metallic color |
+| `sunset_tone` | Warm sunset color |
+| `teal_orange` | Teal shadows, warm highlights |
+| `vintage_film` | Vintage film curve, muted saturation |
+| `golden_hour` | Warm golden color |
+| `cool_blue` | Cool blue balance |
+| `dark_cinema` | Dark cinematic contrast and vignette |
+| `bright_pop` | Bright, saturated image |
+| `poster_tone` | High-impact poster contrast |
+| `fade_wash` | Soft faded color |
+| `color_pop` | Strong color saturation |
+| `warm_monochrome` | Warm-tinted monochrome |
+| `cool_monochrome` | Cool-tinted monochrome |
+| `noir` | High-contrast black and white |
+| `monochrome` | Removes all color |
+| `sepia` | Classic sepia |
+| `high_contrast` | Strong contrast |
+| `soft_contrast` | Reduced contrast |
+| `vivid_color` | Increased saturation |
+| `muted_color` | Reduced saturation |
+| `bleach_bypass` | High contrast, low saturation |
+| `lifted_blacks` | Lifts dark levels |
+| `crushed_blacks` | Darkens black levels |
+| `film_fade` | Faded film appearance |
+
+### 🔍 Blur, Focus and Detail (12)
+
+| Effect ID | Look |
+|---|---|
+| `dream_soft` | Dream-like blur and color |
+| `soft_focus` | Gentle diffusion |
+| `gaussian_blur` | Gaussian blur |
+| `box_blur` | Box blur |
+| `sharpen` | Enhanced detail |
+| `clarity` | Sharpening plus contrast |
+| `edge_detect` | Highlights edges |
+| `emboss` | Emboss-style edges |
+| `fisheye` | Fisheye lens distortion |
+| `soft_vignette` | Gentle edge darkening |
+| `strong_vignette` | Strong edge darkening |
+| `vignette` | Adjustable edge darkening |
+
+### ⚡ Motion and Distortion (10)
+
+| Effect ID | Look |
+|---|---|
+| `motion_blend` | Blends consecutive frames |
+| `frame_ghost` | Multi-frame ghosting |
+| `rgb_glitch` | Shifts color channels |
+| `hue_shift` | Rotates hue |
+| `pixelate` | Pixelated look |
+| `rotate_clockwise` | Rotates clockwise |
+| `rotate_counterclockwise` | Rotates counterclockwise |
+| `mirror_horizontal` | Horizontal mirror |
+| `flip_vertical` | Vertical flip |
+| `negative` | Inverts colors |
+
+### 📼 Texture and Graphic Overlays (10)
+
+| Effect ID | Look |
+|---|---|
+| `film_grain` | Animated grain, adjustable strength |
+| `subtle_grain` | Light grain |
+| `heavy_grain` | Strong grain |
+| `vhs_tape` | VHS distortion and noise |
+| `tv_static` | Animated TV static |
+| `scanlines` | Horizontal scanlines |
+| `grid_overlay` | Visible grid |
+| `crosshair` | Center crosshair |
+| `letterbox` | Cinematic letterbox |
+| `neon_edges` | Colored edge glow |
+
+### 🎛️ Adjustable Effects
+
+Only two effects accept parameters. All others use built-in settings.
+
+| Effect | Parameter | Range | Default |
+|---|---|---|---|
+| `vignette` | `angle` | 0.1 to 1.5 | 0.65 |
+| `film_grain` | `strength` | 1 to 100 | 12 |
+
+### 🔗 Effect Stacks
+
+Combine effects in order. The stack is validated and turned into an FFmpeg filter chain (`engine/effects/effect_stack.py`).
 
 ```json
 {
@@ -73,48 +131,28 @@ Chain multiple effects in order. The stack is validated and converted into an FF
 
 ---
 
-## Rendering Engine
+## 🚀 Quick Start
 
-The FFmpeg adapter (`engine/renderer/ffmpeg_adapter.py`) supports:
+**Requires:** Python 3.9+, FFmpeg (rendering), FFprobe (optional) and a compatible AI coding agent. No third-party Python packages needed for validation.
 
-- One scene per project with one primary video layer
-- One VFX operation or effect stack on the primary footage
-- Optional picture-in-picture overlay (`x`, `y`, `width`, `height`, start time, duration). It must use a different source video, and effects on the overlay are not supported.
-- Scaling and padding to the requested output size
-- H.264 video and AAC audio, with dry-run or real execution
+```bash
+# Check capabilities
+python engine/core/welvox_core.py capabilities
 
-Output uses `libx264`, `yuv420p`, `aac` and `+faststart`. The validator accepts MP4, MOV and WebM values, but the adapter currently builds an MP4-oriented pipeline only.
+# Validate and inspect a plan
+python engine/core/welvox_core.py validate examples/production-plan.example.json
+python engine/core/welvox_core.py inspect examples/production-plan.example.json
 
-### Current limitations
+# Dry run (default)
+python engine/renderer/ffmpeg_adapter.py examples/production-plan.example.json
 
-V1.0.0 is not a full nonlinear editor. It does not provide:
-
-- Multi-scene rendering
-- Arbitrary multi-layer compositing
-- Effect stacks on overlay footage
-- A visual timeline editor
-- Cloud rendering
-- Automatic text-to-video generation
-
-Unsupported project structures are rejected, never silently rendered.
+# Render for real
+python engine/renderer/ffmpeg_adapter.py examples/production-plan.example.json --execute
+```
 
 ---
 
-## Production Plans
-
-Projects are described in a structured JSON plan covering title and brief, output size and frame rate, format, assets, timeline, scenes and layers, effects, audio and metadata.
-
-| File | Purpose |
-|---|---|
-| `schemas/production-plan.schema.json` | Plan schema |
-| `examples/production-plan.example.json` | Example plan |
-| `engine/core/welvox_core.py` | Validation and inspection |
-
-The core engine also detects FFmpeg, FFprobe and Blender, checks asset references and timing, and inspects project metadata. Validation is structural and timeline-based. It is not a full JSON Schema implementation, and not every schema layer type is supported by the renderer yet.
-
----
-
-## AI Agent Integrations
+## 🤖 Agent Integrations
 
 | Agent | Skill file |
 |---|---|
@@ -123,46 +161,53 @@ The core engine also detects FFmpeg, FFprobe and Blender, checks asset reference
 | Gemini CLI | `.agents/skills/welvox-studio-ai/SKILL.md` |
 | Other agents | `skills/welvox-studio-ai/SKILL.md` |
 
-The shared skill guides an agent to understand the brief, check dependencies, read the schema, pick exact effect IDs, validate the plan, prepare and run supported renders, then verify results and report limitations honestly. Discovery behavior may vary between tools and versions. Shared guidelines live in `AGENTS.md`.
+The shared skill guides agents to read the brief, check dependencies, pick exact effect IDs, validate the plan, run supported renders and report limitations honestly. Discovery may vary between tools. See `AGENTS.md` for shared guidelines.
 
 ---
 
-## Getting Started
+## 🎞️ Rendering Engine
 
-**Requirements:** Python 3.9+, FFmpeg (for rendering), FFprobe (optional, for inspection) and a compatible AI coding agent. Basic validation needs no third-party Python packages.
+`engine/renderer/ffmpeg_adapter.py` supports:
 
-Run all commands from the repository root:
+- One scene with one primary video layer
+- One effect or one effect stack on the primary footage
+- Optional picture-in-picture overlay (`x`, `y`, `width`, `height`, start, duration). It needs a different source video, and effects on the overlay are not supported.
+- Scaling and padding to the output size
+- H.264 video and AAC audio (`libx264`, `yuv420p`, `aac`, `+faststart`), dry run or real execution
 
-```bash
-# Check available capabilities
-python engine/core/welvox_core.py capabilities
+The validator accepts MP4, MOV and WebM, but the adapter builds an MP4-oriented pipeline only.
 
-# Validate and inspect a plan
-python engine/core/welvox_core.py validate examples/production-plan.example.json
-python engine/core/welvox_core.py inspect examples/production-plan.example.json
+**Not in V1.0.0:** multi-scene rendering, arbitrary multi-layer compositing, effect stacks on overlays, a visual timeline editor, cloud rendering and text-to-video. Unsupported structures are rejected, never silently rendered.
 
-# Prepare a render job (dry run, default)
-python engine/renderer/ffmpeg_adapter.py examples/production-plan.example.json
+---
 
-# Execute the render
-python engine/renderer/ffmpeg_adapter.py examples/production-plan.example.json --execute
-```
+## 📋 Production Plans
 
-Rendering requires valid source footage, a supported plan and FFmpeg on your PATH.
+Each project is a JSON plan: title and brief, output size and frame rate, format, assets, timeline, scenes, layers, effects, audio and metadata.
 
-## Testing
+| File | Purpose |
+|---|---|
+| `schemas/production-plan.schema.json` | Plan schema |
+| `examples/production-plan.example.json` | Example plan |
+| `engine/core/welvox_core.py` | Validation and inspection |
+
+Validation is structural and timeline-based, not a full JSON Schema check. Not every schema layer type is supported by the renderer yet.
+
+---
+
+## ✅ Testing
 
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-Tests cover plan validation, timing, asset references, VFX registration and parameters, effect stacks, real FFmpeg filter execution, renderer behavior, agent integrations and end-to-end rendering. GitHub Actions (`.github/workflows/core-tests.yml`) runs them on pushes and pull requests to `main`. V1.0.0 was released after these passed.
+Tests cover plan validation, effect registration and parameters, effect stacks, real FFmpeg filter execution, the renderer, agent integrations and end-to-end renders. GitHub Actions runs them on pushes and pull requests to `main`, and V1.0.0 shipped after they passed.
 
 A passing test confirms behavior on its test inputs. It does not guarantee every effect suits every source video.
 
 ---
 
-## Repository Structure
+## 🗂️ Repository Structure
 
 ```
 welvox-studio-ai/
@@ -178,39 +223,26 @@ welvox-studio-ai/
 ├── modules/director/DIRECTOR.md
 ├── schemas/production-plan.schema.json
 ├── skills/welvox-studio-ai/
-│   ├── SKILL.md
-│   └── references/director-workflow.md
 ├── tests/
 ├── AGENTS.md
 ├── LICENSE
 └── README.md
 ```
 
-## Development Principles
+## 🧭 Principles
 
-- Never claim an unimplemented feature works
-- Keep creative planning separate from rendering
-- Use exact registered effect identifiers
-- Validate plans before execution
-- Detect dependencies before using them
-- Preserve source media unless destructive changes are authorized
-- Keep engines modular and testable
-- Report errors and unsupported operations honestly
-- Respect software and media licenses
+Never claim an unimplemented feature works · Use exact effect IDs · Validate before executing · Detect dependencies first · Preserve source media · Keep engines modular and testable · Report errors honestly · Respect licenses
 
-## License
+## 📄 License
 
-Released under the [MIT License](LICENSE).
+[MIT License](LICENSE)
 
-## Links
+## 🔗 Links
 
-- [GitHub Repository](https://github.com/piyush2707/welvox-studio-ai)
-- [V1.0.0 Release](https://github.com/piyush2707/welvox-studio-ai/releases/tag/v1.0.0)
-- [VFX Catalog](https://github.com/piyush2707/welvox-studio-ai/blob/main/docs/VFX-EFFECT-CATALOG.md)
-- [Shared Agent Skill](https://github.com/piyush2707/welvox-studio-ai/tree/main/skills/welvox-studio-ai)
-- [Production Plan Schema](https://github.com/piyush2707/welvox-studio-ai/blob/main/schemas/production-plan.schema.json)
-- [Piyush Joshi on LinkedIn](https://www.linkedin.com/in/piyush2707)
+[GitHub](https://github.com/piyush2707/welvox-studio-ai) · [V1.0.0 Release](https://github.com/piyush2707/welvox-studio-ai/releases/tag/v1.0.0) · [VFX Catalog](https://github.com/piyush2707/welvox-studio-ai/blob/main/docs/VFX-EFFECT-CATALOG.md) · [Agent Skill](https://github.com/piyush2707/welvox-studio-ai/tree/main/skills/welvox-studio-ai) · [Schema](https://github.com/piyush2707/welvox-studio-ai/blob/main/schemas/production-plan.schema.json) · [LinkedIn](https://www.linkedin.com/in/piyush2707)
 
----
+<div align="center">
 
 **Welvox Studio AI V1.0.0** · Built with curiosity, creativity and code.
+
+</div>
