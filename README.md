@@ -4,6 +4,11 @@
 
 ### 59 FFmpeg visual effects, directed by your AI coding agent.
 
+
+<p align="center">
+  <img src="assets/welvox-logo.png" 
+    </p>
+
 [![Version](https://img.shields.io/badge/Version-1.0.0-blue)](https://github.com/piyush2707/welvox-studio-ai/releases/tag/v1.0.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![VFX Effects](https://img.shields.io/badge/VFX%20Effects-59-purple)](docs/VFX-EFFECT-CATALOG.md)
@@ -27,6 +32,12 @@ Welvox Studio AI is an open-source video production toolkit for AI coding agents
 
 All effect IDs are the exact names registered in `engine/effects/vfx_engine.py`. Full catalog: [`docs/VFX-EFFECT-CATALOG.md`](docs/VFX-EFFECT-CATALOG.md)
 
+
+
+<p align="center">
+  <img src="assets/welvox-effect.png" 
+    </p>
+  
 ### 🎥 Cinematic and Color Grading (27)
 
 | Effect ID | Look |
