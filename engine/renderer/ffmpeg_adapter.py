@@ -3,7 +3,7 @@
 
 Supports one scene with:
 - One primary footage layer.
-- Optional VFX on primary footage.
+- One VFX operation or an ordered VFX effect stack.
 - Optional one-video picture-in-picture overlay.
 """
 
@@ -16,6 +16,7 @@ from pathlib import Path
 
 from engine.core.welvox_core import load_plan, validate_plan
 from engine.effects.vfx_engine import build_vfx_filters
+from engine.effects.effect_stack import build_effect_stack
 
 
 def resolve_inside_root(root, value):
@@ -119,10 +120,27 @@ def prepare_render_job(plan, project_root, output_path):
     engine = footage.get("engine")
     operation = footage.get("operation")
     parameters = footage.get("parameters", {})
+    effects = footage.get("effects")
 
     vfx_filters = ""
 
-    if engine or operation:
+    if effects is not None:
+        if engine not in (None, "vfx"):
+            return unsupported(
+                "Effect stacks require the VFX engine."
+            )
+
+        if operation:
+            return unsupported(
+                "Use either operation or effects, not both."
+            )
+
+        try:
+            vfx_filters = build_effect_stack(effects)
+        except ValueError as error:
+            return unsupported(str(error))
+
+    elif engine or operation:
         if engine != "vfx" or not operation:
             return unsupported(
                 "Only a VFX engine operation is supported "
@@ -187,6 +205,12 @@ def prepare_render_job(plan, project_root, output_path):
         if overlay.get("engine") or overlay.get("operation"):
             return unsupported(
                 "VFX operations on overlay layers "
+                "are not supported yet."
+            )
+
+        if overlay.get("effects") is not None:
+            return unsupported(
+                "VFX effect stacks on overlay layers "
                 "are not supported yet."
             )
 
@@ -340,6 +364,11 @@ def prepare_render_job(plan, project_root, output_path):
         "output": str(output),
         "duration_seconds": timeline["duration_seconds"],
         "vfx_operation": operation if vfx_filters else None,
+        "vfx_effects": (
+            [item["operation"] for item in effects]
+            if isinstance(effects, list)
+            else ([operation] if vfx_filters else [])
+        ),
         "command": command,
         "execution_performed": False
     }
@@ -449,4 +478,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
+            
