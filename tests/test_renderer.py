@@ -1,4 +1,3 @@
-
 """Tests for the Welvox FFmpeg rendering adapter."""
 
 import copy
@@ -171,6 +170,111 @@ class RendererAdapterTests(unittest.TestCase):
             self.plan,
             self.root,
             "output/invalid.mp4"
+        )
+
+        self.assertFalse(job["ready"])
+        self.assertEqual(job["status"], "unsupported_project")
+
+    def test_multi_effect_stack_is_added_to_command(self):
+        layer = self.plan["timeline"]["scenes"][0]["layers"][0]
+        layer["engine"] = "vfx"
+        layer["effects"] = [
+            {"operation": "cinematic_grade"},
+            {"operation": "vignette"},
+            {"operation": "tech_neon_grade"}
+        ]
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/effect-stack.mp4"
+        )
+
+        self.assertTrue(job["ready"], msg=str(job))
+        self.assertEqual(job["status"], "prepared")
+        self.assertEqual(
+            job["vfx_effects"],
+            [
+                "cinematic_grade",
+                "vignette",
+                "tech_neon_grade"
+            ]
+        )
+
+        filters = job["command"][job["command"].index("-vf") + 1]
+
+        self.assertIn("colorbalance=", filters)
+        self.assertIn("vignette=", filters)
+        self.assertIn("saturation=1.45", filters)
+
+    def test_multi_effect_stack_preserves_effect_order(self):
+        layer = self.plan["timeline"]["scenes"][0]["layers"][0]
+        layer["engine"] = "vfx"
+        layer["effects"] = [
+            {"operation": "vignette"},
+            {"operation": "cinematic_grade"}
+        ]
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/ordered-stack.mp4"
+        )
+
+        self.assertTrue(job["ready"], msg=str(job))
+
+        filters = job["command"][job["command"].index("-vf") + 1]
+
+        self.assertLess(
+            filters.index("vignette="),
+            filters.index("colorbalance=")
+        )
+
+    def test_unknown_effect_in_stack_is_rejected(self):
+        layer = self.plan["timeline"]["scenes"][0]["layers"][0]
+        layer["engine"] = "vfx"
+        layer["effects"] = [
+            {"operation": "cinematic_grade"},
+            {"operation": "unknown_effect"}
+        ]
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/invalid-stack.mp4"
+        )
+
+        self.assertFalse(job["ready"])
+        self.assertEqual(job["status"], "unsupported_project")
+
+    def test_stack_rejects_simultaneous_single_operation(self):
+        layer = self.plan["timeline"]["scenes"][0]["layers"][0]
+        layer["engine"] = "vfx"
+        layer["operation"] = "vignette"
+        layer["effects"] = [
+            {"operation": "cinematic_grade"}
+        ]
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/invalid-stack.mp4"
+        )
+
+        self.assertFalse(job["ready"])
+        self.assertEqual(job["status"], "unsupported_project")
+
+    def test_stack_rejects_non_vfx_engine(self):
+        layer = self.plan["timeline"]["scenes"][0]["layers"][0]
+        layer["engine"] = "motion"
+        layer["effects"] = [
+            {"operation": "vignette"}
+        ]
+
+        job = prepare_render_job(
+            self.plan,
+            self.root,
+            "output/invalid-stack.mp4"
         )
 
         self.assertFalse(job["ready"])
