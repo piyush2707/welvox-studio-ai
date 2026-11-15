@@ -26,17 +26,40 @@ class AgentIntegrationTests(unittest.TestCase):
     def test_all_skills_have_valid_frontmatter(self):
         for path in SKILL_FILES:
             with self.subTest(path=str(path)):
-                content = path.read_text(encoding="utf-8")
+                content = path.read_text(
+                    encoding="utf-8"
+                ).strip()
 
-                self.assertTrue(content.startswith("---\n"))
-                self.assertIn("\nname: welvox-studio-ai\n", content)
-                self.assertIn("\ndescription:", content)
-                self.assertIn("\n---\n", content)
+                self.assertTrue(
+                    content.startswith("---"),
+                    f"Missing YAML frontmatter: {path}"
+                )
+
+                parts = content.split("---", 2)
+
+                self.assertEqual(
+                    len(parts),
+                    3,
+                    f"Invalid YAML frontmatter: {path}"
+                )
+
+                frontmatter = parts[1]
+
+                self.assertIn(
+                    "name: welvox-studio-ai",
+                    frontmatter
+                )
+                self.assertIn(
+                    "description:",
+                    frontmatter
+                )
 
     def test_agent_skills_document_renderer_limits(self):
         for path in SKILL_FILES[:2]:
             with self.subTest(path=str(path)):
-                content = path.read_text(encoding="utf-8").lower()
+                content = path.read_text(
+                    encoding="utf-8"
+                ).lower()
 
                 self.assertIn("one scene", content)
                 self.assertIn("picture-in-picture", content)
