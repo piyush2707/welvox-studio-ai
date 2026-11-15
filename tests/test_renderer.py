@@ -73,9 +73,7 @@ class RendererAdapterTests(unittest.TestCase):
 
     def test_simple_project_prepares_dry_run(self):
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/preview.mp4"
+            self.plan, self.root, "output/preview.mp4"
         )
 
         self.assertTrue(job["ready"])
@@ -89,9 +87,7 @@ class RendererAdapterTests(unittest.TestCase):
         layer["operation"] = "cinematic_grade"
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/cinematic.mp4"
+            self.plan, self.root, "output/cinematic.mp4"
         )
 
         self.assertTrue(job["ready"])
@@ -107,9 +103,7 @@ class RendererAdapterTests(unittest.TestCase):
         layer["operation"] = "tech_neon_grade"
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/neon.mp4"
+            self.plan, self.root, "output/neon.mp4"
         )
 
         self.assertTrue(job["ready"])
@@ -123,9 +117,7 @@ class RendererAdapterTests(unittest.TestCase):
         layer["parameters"] = {"angle": 0.8}
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/vignette.mp4"
+            self.plan, self.root, "output/vignette.mp4"
         )
 
         self.assertTrue(job["ready"])
@@ -138,9 +130,7 @@ class RendererAdapterTests(unittest.TestCase):
         layer["operation"] = "unknown_effect"
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/invalid.mp4"
+            self.plan, self.root, "output/invalid.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -152,9 +142,7 @@ class RendererAdapterTests(unittest.TestCase):
         layer["operation"] = "unknown_motion"
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/invalid.mp4"
+            self.plan, self.root, "output/invalid.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -167,9 +155,7 @@ class RendererAdapterTests(unittest.TestCase):
         layer["parameters"] = {"angle": 5}
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/invalid.mp4"
+            self.plan, self.root, "output/invalid.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -185,9 +171,7 @@ class RendererAdapterTests(unittest.TestCase):
         ]
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/effect-stack.mp4"
+            self.plan, self.root, "output/effect-stack.mp4"
         )
 
         self.assertTrue(job["ready"], msg=str(job))
@@ -216,9 +200,7 @@ class RendererAdapterTests(unittest.TestCase):
         ]
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/ordered-stack.mp4"
+            self.plan, self.root, "output/ordered-stack.mp4"
         )
 
         self.assertTrue(job["ready"], msg=str(job))
@@ -239,9 +221,7 @@ class RendererAdapterTests(unittest.TestCase):
         ]
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/invalid-stack.mp4"
+            self.plan, self.root, "output/invalid-stack.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -256,13 +236,11 @@ class RendererAdapterTests(unittest.TestCase):
         ]
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/invalid-stack.mp4"
+            self.plan, self.root, "output/invalid-stack.mp4"
         )
 
         self.assertFalse(job["ready"])
-        self.assertEqual(job["status"], "unsupported_project")
+        self.assertEqual(job["status"], "invalid_plan")
 
     def test_stack_rejects_non_vfx_engine(self):
         layer = self.plan["timeline"]["scenes"][0]["layers"][0]
@@ -272,21 +250,17 @@ class RendererAdapterTests(unittest.TestCase):
         ]
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/invalid-stack.mp4"
+            self.plan, self.root, "output/invalid-stack.mp4"
         )
 
         self.assertFalse(job["ready"])
-        self.assertEqual(job["status"], "unsupported_project")
+        self.assertEqual(job["status"], "invalid_plan")
 
     def test_missing_source_is_rejected(self):
         self.plan["assets"][0]["uri"] = "assets/missing.mp4"
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/preview.mp4"
+            self.plan, self.root, "output/preview.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -301,9 +275,7 @@ class RendererAdapterTests(unittest.TestCase):
         })
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/preview.mp4"
+            self.plan, self.root, "output/preview.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -313,9 +285,7 @@ class RendererAdapterTests(unittest.TestCase):
         self.add_overlay()
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/picture-in-picture.mp4"
+            self.plan, self.root, "output/picture-in-picture.mp4"
         )
 
         self.assertTrue(job["ready"], msg=str(job))
@@ -349,9 +319,7 @@ class RendererAdapterTests(unittest.TestCase):
         overlay["parameters"]["x"] = -1
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/invalid.mp4"
+            self.plan, self.root, "output/invalid.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -363,9 +331,7 @@ class RendererAdapterTests(unittest.TestCase):
         overlay["parameters"]["width"] = 9999
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/invalid.mp4"
+            self.plan, self.root, "output/invalid.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -377,9 +343,7 @@ class RendererAdapterTests(unittest.TestCase):
         overlay["parameters"]["width"] = 120.5
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/invalid.mp4"
+            self.plan, self.root, "output/invalid.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -391,9 +355,7 @@ class RendererAdapterTests(unittest.TestCase):
         overlay["parameters"]["width"] = True
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/invalid.mp4"
+            self.plan, self.root, "output/invalid.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -406,9 +368,7 @@ class RendererAdapterTests(unittest.TestCase):
         overlay["duration_seconds"] = 2
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/invalid.mp4"
+            self.plan, self.root, "output/invalid.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -419,9 +379,7 @@ class RendererAdapterTests(unittest.TestCase):
         self.plan["assets"][1]["uri"] = "assets/missing-overlay.mp4"
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/invalid.mp4"
+            self.plan, self.root, "output/invalid.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -432,9 +390,7 @@ class RendererAdapterTests(unittest.TestCase):
         self.plan["assets"][1]["uri"] = "assets/source.mp4"
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "output/invalid.mp4"
+            self.plan, self.root, "output/invalid.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -444,9 +400,7 @@ class RendererAdapterTests(unittest.TestCase):
         self.add_overlay()
 
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "assets/overlay.mp4"
+            self.plan, self.root, "assets/overlay.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -457,9 +411,7 @@ class RendererAdapterTests(unittest.TestCase):
         del plan["output"]
 
         job = prepare_render_job(
-            plan,
-            self.root,
-            "output/preview.mp4"
+            plan, self.root, "output/preview.mp4"
         )
 
         self.assertFalse(job["ready"])
@@ -470,16 +422,12 @@ class RendererAdapterTests(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             prepare_render_job(
-                self.plan,
-                self.root,
-                "output/preview.mp4"
+                self.plan, self.root, "output/preview.mp4"
             )
 
     def test_output_cannot_overwrite_source(self):
         job = prepare_render_job(
-            self.plan,
-            self.root,
-            "assets/source.mp4"
+            self.plan, self.root, "assets/source.mp4"
         )
 
         self.assertFalse(job["ready"])
