@@ -1,4 +1,3 @@
-
 """Automated tests for the Welvox Studio AI Core Engine."""
 
 import copy
@@ -28,6 +27,22 @@ class WelvoxCoreTests(unittest.TestCase):
 
     def make_plan(self):
         return copy.deepcopy(self.example)
+
+    def make_effect_stack_plan(self):
+        plan = self.make_plan()
+        layer = plan["timeline"]["scenes"][0]["layers"][0]
+
+        layer["engine"] = "vfx"
+        layer.pop("operation", None)
+        layer["effects"] = [
+            {"operation": "brightness"},
+            {
+                "operation": "contrast",
+                "parameters": {"amount": 1.2}
+            }
+        ]
+
+        return plan
 
     def test_example_plan_is_valid(self):
         result = validate_plan(self.make_plan())
@@ -140,7 +155,99 @@ class WelvoxCoreTests(unittest.TestCase):
         finally:
             Path(temp_path).unlink(missing_ok=True)
 
+    # Effect stack validation tests
+
+    def test_valid_effect_stack_is_accepted(self):
+        plan = self.make_effect_stack_plan()
+
+        result = validate_plan(plan)
+
+        self.assertTrue(result["valid"], result["errors"])
+
+    def test_empty_effect_stack_is_rejected(self):
+        plan = self.make_effect_stack_plan()
+        plan["timeline"]["scenes"][0]["layers"][0]["effects"] = []
+
+        result = validate_plan(plan)
+
+        self.assertFalse(result["valid"])
+
+    def test_non_list_effect_stack_is_rejected(self):
+        plan = self.make_effect_stack_plan()
+        plan["timeline"]["scenes"][0]["layers"][0]["effects"] = "brightness"
+
+        result = validate_plan(plan)
+
+        self.assertFalse(result["valid"])
+
+    def test_effect_item_must_be_an_object(self):
+        plan = self.make_effect_stack_plan()
+        plan["timeline"]["scenes"][0]["layers"][0]["effects"] = [
+            "brightness"
+        ]
+
+        result = validate_plan(plan)
+
+        self.assertFalse(result["valid"])
+
+    def test_effect_requires_operation(self):
+        plan = self.make_effect_stack_plan()
+        plan["timeline"]["scenes"][0]["layers"][0]["effects"] = [
+            {"parameters": {"amount": 1.2}}
+        ]
+
+        result = validate_plan(plan)
+
+        self.assertFalse(result["valid"])
+
+    def test_empty_effect_operation_is_rejected(self):
+        plan = self.make_effect_stack_plan()
+        plan["timeline"]["scenes"][0]["layers"][0]["effects"] = [
+            {"operation": " "}
+        ]
+
+        result = validate_plan(plan)
+
+        self.assertFalse(result["valid"])
+
+    def test_effect_parameters_must_be_an_object(self):
+        plan = self.make_effect_stack_plan()
+        plan["timeline"]["scenes"][0]["layers"][0]["effects"] = [
+            {
+                "operation": "brightness",
+                "parameters": "invalid"
+            }
+        ]
+
+        result = validate_plan(plan)
+
+        self.assertFalse(result["valid"])
+
+    def test_operation_and_effect_stack_cannot_coexist(self):
+        plan = self.make_effect_stack_plan()
+        layer = plan["timeline"]["scenes"][0]["layers"][0]
+        layer["operation"] = "brightness"
+
+        result = validate_plan(plan)
+
+        self.assertFalse(result["valid"])
+
+    def test_effect_stack_requires_vfx_engine(self):
+        plan = self.make_effect_stack_plan()
+        plan["timeline"]["scenes"][0]["layers"][0]["engine"] = "motion"
+
+        result = validate_plan(plan)
+
+        self.assertFalse(result["valid"])
+
+    def test_effect_stack_rejects_missing_engine(self):
+        plan = self.make_effect_stack_plan()
+        plan["timeline"]["scenes"][0]["layers"][0].pop("engine")
+
+        result = validate_plan(plan)
+
+        self.assertFalse(result["valid"])
+
 
 if __name__ == "__main__":
     unittest.main()
-      
