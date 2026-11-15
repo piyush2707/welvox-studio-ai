@@ -1,4 +1,3 @@
-
 ---
 name: welvox-studio-ai
 description: Plan, validate, and execute supported AI-assisted video production with Welvox Studio AI. Use for video production plans, FFmpeg visual effects, ordered effect stacks, and supported video rendering.
