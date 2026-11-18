@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/welvox-logo.png" alt="Welvox Studio AI logo" width="120" />
+<img src="assets/welvox-logo.png" alt="Welvox Studio AI logo" width="250" />
 
 # 🎬 Welvox Studio AI
 
