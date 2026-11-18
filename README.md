@@ -1,13 +1,10 @@
 <div align="center">
 
+<img src="assets/welvox-logo.png" alt="Welvox Studio AI logo" width="120" />
+
 # 🎬 Welvox Studio AI
 
 ### 59 FFmpeg visual effects, directed by your AI coding agent.
-
-
-<p align="center">
-  <img src="assets/welvox-logo.png" 
-    </p>
 
 [![Version](https://img.shields.io/badge/Version-1.0.0-blue)](https://github.com/piyush2707/welvox-studio-ai/releases/tag/v1.0.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -20,11 +17,99 @@ Made by [Piyush Joshi](https://www.linkedin.com/in/piyush2707)
 
 ---
 
+<!-- DEMO: add a before/after GIF at assets/demo.gif, then uncomment the next two lines
+<p align="center"><img src="assets/demo.gif" alt="Before and after Welvox Studio AI" width="700" /></p>
+-->
+
 ## ✨ What is it?
 
-Welvox Studio AI is an open-source video production toolkit for AI coding agents. Tell **Claude Code, OpenAI Codex or Gemini CLI** what look you want. The agent picks effects, builds a JSON production plan, validates it and renders with FFmpeg.
+Welvox Studio AI is an open-source video production toolkit for AI coding agents. Tell **Claude Code, OpenAI Codex or Gemini CLI** what look you want. The agent picks effects, builds a JSON production plan, validates it, and renders with FFmpeg.
 
 **🎞️ 59 effects · 🔗 Stackable in any order · 🤖 3 agent integrations · ✅ Tested with real FFmpeg renders**
+
+---
+
+## 🧭 How it works
+
+```mermaid
+flowchart LR
+    A[Your brief] --> B[AI agent picks effects]
+    B --> C[JSON production plan]
+    C --> D[Validate]
+    D --> E[FFmpeg render]
+    E --> F[Finished MP4]
+```
+
+1. You describe the look in plain language.
+2. The agent chooses exact effect IDs and writes a production plan.
+3. The plan is validated before anything runs.
+4. FFmpeg renders it. Unsupported structures are rejected, never silently rendered.
+
+---
+
+## 🚀 Quick Start
+
+**Requires:** Python 3.9+, FFmpeg (for rendering), FFprobe (optional), and a compatible AI coding agent. No third-party Python packages are needed for validation.
+
+**Install FFmpeg**
+
+```bash
+# macOS
+brew install ffmpeg
+
+# Ubuntu / Debian
+sudo apt install ffmpeg
+
+# Windows
+winget install ffmpeg
+```
+
+**Get the project**
+
+```bash
+git clone https://github.com/piyush2707/welvox-studio-ai.git
+cd welvox-studio-ai
+```
+
+**Try it without an agent**
+
+```bash
+# Check capabilities
+python engine/core/welvox_core.py capabilities
+
+# Validate and inspect a plan
+python engine/core/welvox_core.py validate examples/production-plan.example.json
+python engine/core/welvox_core.py inspect examples/production-plan.example.json
+
+# Dry run (default)
+python engine/renderer/ffmpeg_adapter.py examples/production-plan.example.json
+
+# Render for real
+python engine/renderer/ffmpeg_adapter.py examples/production-plan.example.json --execute
+```
+
+---
+
+## 🤖 Use it with your agent
+
+Open your agent inside the project folder and describe the look you want. Example prompts:
+
+> *"Give my clip a cinematic look with film grain and a soft vignette."*
+>
+> *"Make this footage look like an old VHS tape."*
+>
+> *"Use a teal and orange grade, then add letterbox bars."*
+
+The agent reads the skill, checks your dependencies, picks exact effect IDs, validates the plan, runs a supported render, and reports any limitation honestly.
+
+| Agent | Skill file |
+|---|---|
+| Claude Code | `.claude/skills/welvox-studio-ai/SKILL.md` |
+| OpenAI Codex | `.agents/skills/welvox-studio-ai/SKILL.md` |
+| Gemini CLI | `.agents/skills/welvox-studio-ai/SKILL.md` |
+| Other agents | `skills/welvox-studio-ai/SKILL.md` |
+
+Discovery may vary between tools. See `AGENTS.md` for shared guidelines.
 
 ---
 
@@ -32,13 +117,8 @@ Welvox Studio AI is an open-source video production toolkit for AI coding agents
 
 All effect IDs are the exact names registered in `engine/effects/vfx_engine.py`. Full catalog: [`docs/VFX-EFFECT-CATALOG.md`](docs/VFX-EFFECT-CATALOG.md)
 
-
-
-<p align="center">
-  <img src="assets/welvox-effect.png" 
-    </p>
-  
-### 🎥 Cinematic and Color Grading (27)
+<details>
+<summary><b>🎥 Cinematic and Color Grading (27)</b></summary>
 
 | Effect ID | Look |
 |---|---|
@@ -70,7 +150,10 @@ All effect IDs are the exact names registered in `engine/effects/vfx_engine.py`.
 | `crushed_blacks` | Darkens black levels |
 | `film_fade` | Faded film appearance |
 
-### 🔍 Blur, Focus and Detail (12)
+</details>
+
+<details>
+<summary><b>🔍 Blur, Focus and Detail (12)</b></summary>
 
 | Effect ID | Look |
 |---|---|
@@ -87,7 +170,10 @@ All effect IDs are the exact names registered in `engine/effects/vfx_engine.py`.
 | `strong_vignette` | Strong edge darkening |
 | `vignette` | Adjustable edge darkening |
 
-### ⚡ Motion and Distortion (10)
+</details>
+
+<details>
+<summary><b>⚡ Motion and Distortion (10)</b></summary>
 
 | Effect ID | Look |
 |---|---|
@@ -102,7 +188,10 @@ All effect IDs are the exact names registered in `engine/effects/vfx_engine.py`.
 | `flip_vertical` | Vertical flip |
 | `negative` | Inverts colors |
 
-### 📼 Texture and Graphic Overlays (10)
+</details>
+
+<details>
+<summary><b>📼 Texture and Graphic Overlays (10)</b></summary>
 
 | Effect ID | Look |
 |---|---|
@@ -116,6 +205,8 @@ All effect IDs are the exact names registered in `engine/effects/vfx_engine.py`.
 | `crosshair` | Center crosshair |
 | `letterbox` | Cinematic letterbox |
 | `neon_edges` | Colored edge glow |
+
+</details>
 
 ### 🎛️ Adjustable Effects
 
@@ -139,40 +230,6 @@ Combine effects in order. The stack is validated and turned into an FFmpeg filte
   ]
 }
 ```
-
----
-
-## 🚀 Quick Start
-
-**Requires:** Python 3.9+, FFmpeg (rendering), FFprobe (optional) and a compatible AI coding agent. No third-party Python packages needed for validation.
-
-```bash
-# Check capabilities
-python engine/core/welvox_core.py capabilities
-
-# Validate and inspect a plan
-python engine/core/welvox_core.py validate examples/production-plan.example.json
-python engine/core/welvox_core.py inspect examples/production-plan.example.json
-
-# Dry run (default)
-python engine/renderer/ffmpeg_adapter.py examples/production-plan.example.json
-
-# Render for real
-python engine/renderer/ffmpeg_adapter.py examples/production-plan.example.json --execute
-```
-
----
-
-## 🤖 Agent Integrations
-
-| Agent | Skill file |
-|---|---|
-| Claude Code | `.claude/skills/welvox-studio-ai/SKILL.md` |
-| OpenAI Codex | `.agents/skills/welvox-studio-ai/SKILL.md` |
-| Gemini CLI | `.agents/skills/welvox-studio-ai/SKILL.md` |
-| Other agents | `skills/welvox-studio-ai/SKILL.md` |
-
-The shared skill guides agents to read the brief, check dependencies, pick exact effect IDs, validate the plan, run supported renders and report limitations honestly. Discovery may vary between tools. See `AGENTS.md` for shared guidelines.
 
 ---
 
@@ -218,6 +275,29 @@ A passing test confirms behavior on its test inputs. It does not guarantee every
 
 ---
 
+## 🗺️ Roadmap
+
+Planned, not yet implemented:
+
+- [ ] Multi-scene rendering
+- [ ] Multi-layer compositing
+- [ ] Effect stacks on overlays
+- [ ] Visual timeline editor
+- [ ] Cloud rendering
+- [ ] Text-to-video
+
+---
+
+## 🤝 Contributing
+
+Ideas, bug reports and pull requests are welcome.
+
+- Open an issue first for larger changes.
+- A new effect should be registered in `engine/effects/vfx_engine.py`, listed in `docs/VFX-EFFECT-CATALOG.md`, and covered by a test.
+- Keep changes small and tested. Only add what actually works.
+
+---
+
 ## 🗂️ Repository Structure
 
 ```
@@ -225,6 +305,7 @@ welvox-studio-ai/
 ├── .agents/skills/welvox-studio-ai/SKILL.md
 ├── .claude/skills/welvox-studio-ai/SKILL.md
 ├── .github/workflows/core-tests.yml
+├── assets/
 ├── docs/VFX-EFFECT-CATALOG.md
 ├── engine/
 │   ├── core/welvox_core.py
@@ -240,7 +321,7 @@ welvox-studio-ai/
 └── README.md
 ```
 
-## 🧭 Principles
+## 🧱 Principles
 
 Never claim an unimplemented feature works · Use exact effect IDs · Validate before executing · Detect dependencies first · Preserve source media · Keep engines modular and testable · Report errors honestly · Respect licenses
 
@@ -257,3 +338,4 @@ Never claim an unimplemented feature works · Use exact effect IDs · Validate b
 **Welvox Studio AI V1.0.0** · Built with curiosity, creativity and code.
 
 </div>
+```
